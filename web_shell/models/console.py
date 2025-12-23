@@ -19,16 +19,62 @@ class WebShellConsole(models.Model):
     _name = 'web.shell.console'
     _description = 'Web Shell Console'
 
+    # Default blocked patterns - can be overridden via ir.config_parameter
+    DEFAULT_BLOCKED_PATTERNS = [
+        'os.system', 'os.popen', 'subprocess',
+        'shutil.rmtree', '__import__',
+    ]
+
+    def _get_blocked_patterns(self):
+        """Get blocked patterns from config or use defaults."""
+        ICP = self.env['ir.config_parameter'].sudo()
+        patterns_str = ICP.get_param('web_shell.blocked_patterns', '')
+        if patterns_str:
+            return [p.strip() for p in patterns_str.split(',') if p.strip()]
+        return self.DEFAULT_BLOCKED_PATTERNS
+
+    def _get_timeout(self):
+        """Get execution timeout from config (default 30 seconds)."""
+        ICP = self.env['ir.config_parameter'].sudo()
+        try:
+            return int(ICP.get_param('web_shell.timeout', '30'))
+        except ValueError:
+            return 30
+
+    def _check_blocked_patterns(self, code):
+        """Check if code contains any blocked patterns."""
+        patterns = self._get_blocked_patterns()
+        for pattern in patterns:
+            if pattern in code:
+                raise Exception(f"⛔ Comando bloqueado: '{pattern}' no está permitido. "
+                              f"Configurable via ir.config_parameter 'web_shell.blocked_patterns'")
+
     @api.model
     def execute_command(self, code):
         """
         Executes python code and returns the output.
+        Security features:
+        - Audit logging of all commands
+        - Configurable timeout (web_shell.timeout, default 30s)
+        - Configurable blocked patterns (web_shell.blocked_patterns)
         """
+        import signal
+
         if not self.env.user.has_group('base.group_system'):
             raise Exception("Access Denied: You must be a system administrator to use the shell.")
 
         user_id = self.env.user.id
-        
+        user_login = self.env.user.login
+
+        # SECURITY: Audit logging
+        _logger.warning(
+            "WEB_SHELL AUDIT - User: %s (ID: %d) executing: %s",
+            user_login, user_id, code[:500]
+        )
+
+        # SECURITY: Check for blocked patterns
+        self._check_blocked_patterns(code)
+
         # Initialize user session if needed (only user variables, no env/self!)
         if user_id not in SESSION_LOCALS:
             SESSION_LOCALS[user_id] = {}
@@ -54,22 +100,40 @@ class WebShellConsole(models.Model):
         sys.stdout = stdout_capture
         sys.stderr = stderr_capture
 
+        # SECURITY: Timeout handler
+        timeout = self._get_timeout()
+        
+        def timeout_handler(signum, frame):
+            raise TimeoutError(f"⏱️ Ejecución excedió el tiempo límite ({timeout}s). "
+                             f"Configurable via ir.config_parameter 'web_shell.timeout'")
+
         result = None
         try:
-            # Try to eval first (for expressions), then exec (for statements)
+            # Set timeout (only works on Unix)
+            if hasattr(signal, 'SIGALRM'):
+                signal.signal(signal.SIGALRM, timeout_handler)
+                signal.alarm(timeout)
+            
             try:
-                # Compile as 'eval' to see if it's an expression
-                # This allows typing "1+1" and getting "2" without "print"
-                compiled = compile(code, '<string>', 'eval')
-                result_obj = eval(compiled, execution_context)
-                if result_obj is not None:
-                    print(repr(result_obj))
-            except SyntaxError:
-                # If it's not an expression, exec it
-                exec(code, execution_context)
-        except Exception:
-            traceback.print_exc()
+                # Try to eval first (for expressions), then exec (for statements)
+                try:
+                    # Compile as 'eval' to see if it's an expression
+                    # This allows typing "1+1" and getting "2" without "print"
+                    compiled = compile(code, '<string>', 'eval')
+                    result_obj = eval(compiled, execution_context)
+                    if result_obj is not None:
+                        print(repr(result_obj))
+                except SyntaxError:
+                    # If it's not an expression, exec it
+                    exec(code, execution_context)
+            except TimeoutError:
+                raise
+            except Exception:
+                traceback.print_exc()
         finally:
+            # Cancel timeout
+            if hasattr(signal, 'SIGALRM'):
+                signal.alarm(0)
             sys.stdout = original_stdout
             sys.stderr = original_stderr
         

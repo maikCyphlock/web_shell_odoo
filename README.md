@@ -33,6 +33,29 @@ Once installed, you can access the Web Shell from the debug menu or via the dedi
 ### Log Viewer
 The log viewer automatically finds and streams Odoo logs (supporting standard paths and Docker stdout). Access it via the dashboard to monitor system activity in real-time.
 
+## ⚠️ Security
+
+> **WARNING**: This module allows arbitrary Python code execution. **ONLY use in development environments. NEVER install in production.**
+
+### Security Features
+
+| Feature | Description | Configuration |
+|---------|-------------|---------------|
+| **Audit Logging** | All executed commands are logged | Automatic (check Odoo logs for `WEB_SHELL AUDIT`) |
+| **Timeout** | Commands have a maximum execution time | `ir.config_parameter` → `web_shell.timeout` (default: 30s) |
+| **Blocked Patterns** | Dangerous commands are blocked | `ir.config_parameter` → `web_shell.blocked_patterns` |
+
+### Default Blocked Patterns
+```
+os.system, os.popen, subprocess, shutil.rmtree, __import__
+```
+
+### Configuring Parameters
+1. Go to **Settings** → **Technical** → **System Parameters**
+2. Create/edit the parameter:
+   - `web_shell.timeout`: Set to number of seconds (e.g., `60`)
+   - `web_shell.blocked_patterns`: Comma-separated list (e.g., `os.system,subprocess`)
+
 ## 👤 Author
 
 **MAIKOL AGUILAR**

@@ -1,9 +1,18 @@
 {
     'name': "Web Shell",
-    'summary': "Frontend Python Shell & Log Viewer",
+    'summary': "Frontend Python Shell & Log Viewer (Development Tool)",
     'description': """
-        Provides a terminal interface to execute Python code
-        and view logs directly from the Odoo web client.
+! ADVERTENCIA DE SEGURIDAD !
+Este módulo permite ejecución de código Python arbitrario.
+SOLO usar en entornos de desarrollo. NUNCA instalar en producción.
+
+Características de seguridad:
+- Audit logging de todos los comandos ejecutados
+- Timeout configurable via ir.config_parameter 'web_shell.timeout' (default: 30s)
+- Patrones bloqueados configurables via 'web_shell.blocked_patterns'
+  (default: os.system, os.popen, subprocess, shutil.rmtree, __import__)
+
+Solo usuarios con grupo 'Administration / Settings' pueden usar el shell.
     """,
     'author': "MAIKOL AGUILAR",
     'website': "https://github.com/maikCyphlock",
