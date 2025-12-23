@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="action_web_shell" model="ir.actions.client">
+        <field name="name">Web Shell</field>
+        <field name="tag">web_shell.main</field>
+    </record>
+
+    <menuitem id="menu_web_shell"
+              name="Web Shell"
+              parent="base.menu_custom"
+              action="action_web_shell"
+              sequence="100"
+              groups="base.group_system"/>
+</odoo>

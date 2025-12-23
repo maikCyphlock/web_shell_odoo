@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+    <t t-name="web_shell.LogViewerSystray" owl="1">
+        <button class="o_log_viewer_systray btn btn-secondary" 
+                t-on-click="onClick"
+                title="Instance Logs (Debug)">
+            <i class="fa fa-clipboard"/>
+        </button>
+    </t>
+</templates>

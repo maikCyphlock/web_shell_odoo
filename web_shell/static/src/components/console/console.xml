@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+    <t t-name="web_shell.Console" owl="1">
+        <div class="o_web_shell_container d-flex flex-column h-100">
+            <div class="d-flex flex-grow-1 h-100" style="height: 0;">
+                <!-- Left: Terminal -->
+                <div class="o_shell_left d-flex flex-column">
+                    <!-- Output History -->
+                    <div class="o_shell_output" t-ref="outputRef">
+                        <t t-foreach="state.history" t-as="line" t-key="line_index">
+                            <div t-if="line.type === 'input'" class="o_history_input">
+                                <span class="o_prompt">&gt;&gt;&gt;</span>
+                                <code t-out="line.highlighted"/>
+                            </div>
+                            <div t-if="line.type === 'output'" class="o_history_output">
+                                <t t-esc="line.text"/>
+                            </div>
+                            <div t-if="line.type === 'error'" class="o_history_error">
+                                <t t-esc="line.text"/>
+                            </div>
+                        </t>
+                    </div>
+
+                    <!-- Input Area with Ace Editor -->
+                    <div class="o_input_wrapper">
+                        <div class="o_input_header">
+                            <span>🚀 CTRL+ENTER to execute | TAB to indent | CTRL+↑↓ for history | Ace Editor</span>
+                        </div>
+                        <div class="o_ace_editor" t-ref="editorRef"></div>
+                    </div>
+                </div>
+
+                <!-- Right: Log Viewer -->
+                <div class="o_shell_right d-flex flex-column border-start border-secondary">
+                    <div class="d-flex justify-content-between align-items-center border-bottom border-dark p-2 bg-dark">
+                        <span class="fw-bold small text-light">INSTANCE LOGS</span>
+                        <button class="btn btn-sm btn-outline-secondary py-0" t-on-click="clearLogs">CLEAR</button>
+                    </div>
+                    <div class="flex-grow-1 overflow-auto o_log_output" t-ref="logRef">
+                        <t t-foreach="state.logs" t-as="log" t-key="log_index">
+                            <div class="mb-1 border-bottom border-secondary pb-1 small">
+                                <span class="text-muted me-2" t-esc="log.time"/>
+                                <span t-attf-class="fw-bold me-2 {{ getLogLevelClass(log.level) }}" t-esc="log.level"/>
+                                <span class="text-warning me-2" t-esc="log.name"/>
+                                <span class="text-light" t-esc="log.message"/>
+                            </div>
+                        </t>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </t>
+</templates>

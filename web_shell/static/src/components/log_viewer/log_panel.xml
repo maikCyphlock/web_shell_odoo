@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+    <t t-name="web_shell.LogPanel" owl="1">
+        <div t-if="state.visible" 
+             class="o_log_panel" 
+             t-ref="panelRef"
+             t-att-style="`top: ${state.position.top}px; right: ${state.position.right}px;`">
+            
+            <!-- Header (draggable) -->
+            <div class="o_log_panel_header" t-ref="headerRef" t-on-mousedown="onDragStart">
+                <span class="o_log_panel_title">
+                    <i class="fa fa-clipboard me-2"/>
+                    Instance Logs
+                </span>
+                <div class="o_log_panel_actions">
+                    <button class="btn btn-sm btn-link text-white" 
+                            t-on-click="toggleRecording"
+                            t-att-title="state.recording ? 'Pause logging' : 'Resume logging'">
+                        <i t-attf-class="fa #{state.recording ? 'fa-pause' : 'fa-play'} #{state.recording ? 'text-warning' : 'text-success'}"/>
+                    </button>
+                    <button class="btn btn-sm btn-link text-white" 
+                            t-on-click="clearLogs"
+                            title="Clear logs">
+                        <i class="fa fa-trash"/>
+                    </button>
+                    <button class="btn btn-sm btn-link text-white o_log_panel_close" 
+                            t-on-click="closePanel"
+                            title="Close">
+                        <i class="fa fa-times"/>
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Content -->
+            <div class="o_log_panel_content">
+                <t t-if="state.error">
+                    <div class="text-danger text-center p-3">
+                        <i class="fa fa-exclamation-triangle me-2"/>
+                        <t t-esc="state.error"/>
+                    </div>
+                </t>
+                <t t-elif="state.logs.length === 0">
+                    <div class="text-muted text-center p-3">No logs yet...</div>
+                </t>
+                <t t-else="">
+                    <t t-foreach="state.logs" t-as="log" t-key="log_index">
+                        <div class="o_log_entry">
+                            <span class="text-muted me-2" t-esc="log.time"/>
+                            <span t-attf-class="fw-bold me-2 {{ getLogLevelClass(log.level) }}" t-esc="log.level"/>
+                            <span class="text-warning me-2" t-esc="log.name"/>
+                            <span class="text-light" t-esc="log.message"/>
+                        </div>
+                    </t>
+                </t>
+            </div>
+        </div>
+    </t>
+</templates>
