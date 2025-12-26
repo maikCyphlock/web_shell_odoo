@@ -23,8 +23,14 @@
 
                     <!-- Input Area with Ace Editor -->
                     <div class="o_input_wrapper">
-                        <div class="o_input_header">
+                        <div class="o_input_header d-flex justify-content-between align-items-center">
                             <span>🚀 CTRL+ENTER to execute | TAB to indent | CTRL+↑↓ for history | Ace Editor</span>
+                            <div class="form-check form-switch me-2">
+                                <input class="form-check-input" type="checkbox" id="safeModeSwitch" t-model="state.safeMode"/>
+                                <label class="form-check-label text-warning fw-bold" for="safeModeSwitch">
+                                    🛡️ Safe Mode
+                                </label>
+                            </div>
                         </div>
                         <div class="o_ace_editor" t-ref="editorRef"></div>
                     </div>

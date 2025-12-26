@@ -29,6 +29,7 @@ export class WebShellConsole extends Component {
             logs: [],
             commandHistory: [],
             historyIndex: -1,
+            safeMode: true,
         });
 
         onWillStart(() => {
@@ -173,7 +174,7 @@ export class WebShellConsole extends Component {
         }
 
         try {
-            const result = await this.orm.call("web.shell.console", "execute_command", [cmd]);
+            const result = await this.orm.call("web.shell.console", "execute_command", [cmd], { safe_mode: this.state.safeMode });
             if (result) {
                 this.state.history.push({ type: 'output', text: result });
             }
