@@ -50,13 +50,14 @@ class WebShellConsole(models.Model):
                               f"Configurable via ir.config_parameter 'web_shell.blocked_patterns'")
 
     @api.model
-    def execute_command(self, code):
+    def execute_command(self, code, safe_mode=False):
         """
         Executes python code and returns the output.
         Security features:
         - Audit logging of all commands
         - Configurable timeout (web_shell.timeout, default 30s)
         - Configurable blocked patterns (web_shell.blocked_patterns)
+        - Safe Mode: automatic rollback of database changes
         """
         import signal
 
@@ -68,8 +69,8 @@ class WebShellConsole(models.Model):
 
         # SECURITY: Audit logging
         _logger.warning(
-            "WEB_SHELL AUDIT - User: %s (ID: %d) executing: %s",
-            user_login, user_id, code[:500]
+            "WEB_SHELL AUDIT - User: %s (ID: %d) executing (SafeMode=%s): %s",
+            user_login, user_id, safe_mode, code[:500]
         )
 
         # SECURITY: Check for blocked patterns
@@ -107,32 +108,54 @@ class WebShellConsole(models.Model):
             raise TimeoutError(f"⏱️ Ejecución excedió el tiempo límite ({timeout}s). "
                              f"Configurable via ir.config_parameter 'web_shell.timeout'")
 
+        class SafeModeRollback(Exception):
+            pass
+
         result = None
+        timeout_enabled = False
         try:
             # Set timeout (only works on Unix)
+            # Signal only works in main thread
             if hasattr(signal, 'SIGALRM'):
-                signal.signal(signal.SIGALRM, timeout_handler)
-                signal.alarm(timeout)
-            
-            try:
-                # Try to eval first (for expressions), then exec (for statements)
                 try:
-                    # Compile as 'eval' to see if it's an expression
-                    # This allows typing "1+1" and getting "2" without "print"
-                    compiled = compile(code, '<string>', 'eval')
-                    result_obj = eval(compiled, execution_context)
-                    if result_obj is not None:
-                        print(repr(result_obj))
-                except SyntaxError:
-                    # If it's not an expression, exec it
-                    exec(code, execution_context)
+                    signal.signal(signal.SIGALRM, timeout_handler)
+                    signal.alarm(timeout)
+                    timeout_enabled = True
+                except ValueError:
+                    # Occurs if we are not in the main thread
+                    _logger.warning("WebShell: Cannot use timeout in non-main thread")
+
+            try:
+                def _run_code():
+                    # Try to eval first (for expressions), then exec (for statements)
+                    try:
+                        # Compile as 'eval' to see if it's an expression
+                        # This allows typing "1+1" and getting "2" without "print"
+                        compiled = compile(code, '<string>', 'eval')
+                        result_obj = eval(compiled, execution_context)
+                        if result_obj is not None:
+                            print(repr(result_obj))
+                    except SyntaxError:
+                        # If it's not an expression, exec it
+                        exec(code, execution_context)
+
+                if safe_mode:
+                    try:
+                        with self.env.cr.savepoint():
+                            _run_code()
+                            raise SafeModeRollback()
+                    except SafeModeRollback:
+                        print("\n🛡️ SAFE MODE: Transaction rolled back automatically.")
+                else:
+                    _run_code()
+
             except TimeoutError:
                 raise
             except Exception:
                 traceback.print_exc()
         finally:
             # Cancel timeout
-            if hasattr(signal, 'SIGALRM'):
+            if hasattr(signal, 'SIGALRM') and timeout_enabled:
                 signal.alarm(0)
             sys.stdout = original_stdout
             sys.stderr = original_stderr
