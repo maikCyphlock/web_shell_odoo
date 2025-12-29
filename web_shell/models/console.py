@@ -46,7 +46,7 @@ class WebShellConsole(models.Model):
         patterns = self._get_blocked_patterns()
         for pattern in patterns:
             if pattern in code:
-                raise Exception(f"⛔ Comando bloqueado: '{pattern}' no está permitido. "
+                raise Exception(f"Comando bloqueado: '{pattern}' no está permitido. "
                               f"Configurable via ir.config_parameter 'web_shell.blocked_patterns'")
 
     @api.model
@@ -105,7 +105,7 @@ class WebShellConsole(models.Model):
         timeout = self._get_timeout()
         
         def timeout_handler(signum, frame):
-            raise TimeoutError(f"⏱️ Ejecución excedió el tiempo límite ({timeout}s). "
+            raise TimeoutError(f" Ejecución excedió el tiempo límite ({timeout}s). "
                              f"Configurable via ir.config_parameter 'web_shell.timeout'")
 
         class SafeModeRollback(Exception):
