@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 import logging
-import odoo
 from odoo import models
 
 _logger = logging.getLogger(__name__)

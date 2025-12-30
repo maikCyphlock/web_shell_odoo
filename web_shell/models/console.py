@@ -10,10 +10,8 @@ import difflib
 from lxml import etree
 
 from odoo import models, api, fields
-from odoo.http import request
 from odoo.tools.profiler import Profiler
 import time
-import io
 import contextlib
 from .debug_tools import get_cache_info
 
