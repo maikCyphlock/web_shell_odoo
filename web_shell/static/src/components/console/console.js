@@ -1,17 +1,19 @@
 /** @odoo-module **/
 /*
     Part of Web Shell. See LICENSE file for full copyright and licensing details.
-    Created by MAIKOL AGUILAR (https://github.com/maikol-aguilar)
+    Created by MAIKOL AGUILAR (https://github.com/maikCyphlock)
 */
 
 import { registry } from "@web/core/registry";
 import { useService } from "@web/core/utils/hooks";
 import { Component, useState, onWillStart, useRef, onMounted, onWillDestroy, onWillUnmount, markup } from "@odoo/owl";
 import { highlightPython } from "./highlighter";
+import { DebugTools } from "../debug_tools/debug_tools";
 
 export class WebShellConsole extends Component {
     static template = "web_shell.Console";
     static props = ["*"];
+    static components = { DebugTools };
 
     setup() {
         this.orm = useService("orm");
@@ -25,11 +27,13 @@ export class WebShellConsole extends Component {
 
         this.state = useState({
             input: "",
+            code: '',
             history: [],
             logs: [],
             commandHistory: [],
             historyIndex: -1,
             safeMode: true,
+            activeRightTab: 'logs',
         });
 
         onWillStart(() => {
@@ -37,14 +41,17 @@ export class WebShellConsole extends Component {
         });
 
         onMounted(() => {
+            if (this.editorRef.el) {
+                this.initializeAceEditor();
+            }
+            // Listen to logs
             this.busService.addEventListener("notification", this.onNotification.bind(this));
-            this.initializeAceEditor();
         });
 
         onWillUnmount(() => {
+            // Ace cleanup
             if (this.editor) {
                 this.editor.destroy();
-                this.editor = null;
             }
         });
 
@@ -114,7 +121,7 @@ export class WebShellConsole extends Component {
 
     onNotification({ detail: notifications }) {
         for (const { payload, type } of notifications) {
-            if (type === "log_message") {
+            if (type === "web_shell_log") {
                 this.state.logs.push(payload);
                 if (this.state.logs.length > 500) {
                     this.state.logs.shift();
@@ -174,7 +181,9 @@ export class WebShellConsole extends Component {
         }
 
         try {
-            const result = await this.orm.call("web.shell.console", "execute_command", [cmd], { safe_mode: this.state.safeMode });
+            const result = await this.orm.call("web.shell.console", "execute_command", [cmd], {
+                safe_mode: this.state.safeMode,
+            });
             if (result) {
                 this.state.history.push({ type: 'output', text: result });
             }

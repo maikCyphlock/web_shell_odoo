@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+
+    <t t-name="web_shell.ORMProfiler" owl="1">
+        <div class="ws-orm-profiler h-100 d-flex flex-column bg-white">
+            
+            <!-- Editor Section -->
+            <div class="p-3 border-bottom bg-light">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <h6 class="m-0 text-muted">Python Code to Profile</h6>
+                    <div>
+                        <button class="btn btn-sm btn-outline-secondary me-2" t-on-click="clear" t-att-disabled="!state.results">Clear</button>
+                        <button class="btn btn-sm btn-primary" t-on-click="runProfile" t-att-disabled="state.loading">
+                            <i t-att-class="state.loading ? 'fa fa-spinner fa-spin' : 'fa fa-play'"/> Run Profile
+                        </button>
+                    </div>
+                </div>
+                <div t-ref="editor" class="ws-profiler-editor border rounded bg-white" style="height: 200px;"></div>
+            </div>
+
+            <!-- Results Section -->
+            <div class="flex-grow-1 overflow-auto p-3">
+                <div t-if="!state.results and !state.loading" class="text-center text-muted mt-5">
+                    <i class="fa fa-tachometer-alt fa-3x mb-3 text-light"></i>
+                    <p>Enter Python code above and click "Run Profile" to analyze its database impact.</p>
+                </div>
+
+                <div t-if="state.results">
+                    <!-- Error State -->
+                    <div t-if="state.results.error" class="alert alert-danger">
+                        <pre class="m-0 small" style="white-space: pre-wrap;"><t t-esc="state.results.error"/></pre>
+                    </div>
+
+                    <!-- Stats Summary -->
+                    <div t-if="!state.results.error" class="row g-3 mb-4">
+                        <div class="col-6 col-md-3">
+                            <div class="card bg-primary bg-opacity-10 border-primary text-center p-3">
+                                <div class="h4 m-0"><t t-esc="state.results.total_queries"/></div>
+                                <div class="small text-muted">SQL Queries</div>
+                            </div>
+                        </div>
+                        <div class="col-6 col-md-3">
+                            <div class="card bg-success bg-opacity-10 border-success text-center p-3">
+                                <div class="h4 m-0"><t t-esc="state.results.total_time?.toFixed(2)"/> ms</div>
+                                <div class="small text-muted">Execution Time</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Performance Alerts -->
+                    <div t-if="state.results.alerts and state.results.alerts.length > 0">
+                        <t t-foreach="state.results.alerts" t-as="alert" t-key="alert_index">
+                            <div class="alert alert-warning d-flex align-items-center mb-3">
+                                <i class="fa fa-exclamation-triangle me-3 fa-2x"></i>
+                                <div><t t-esc="alert.message"/></div>
+                            </div>
+                        </t>
+                    </div>
+
+                    <!-- Detailed Query Log -->
+                    <div t-if="state.results.queries and state.results.queries.length > 0">
+                        <h6>Query Details</h6>
+                        <div class="list-group list-group-flush border rounded overflow-hidden">
+                            <t t-foreach="state.results.queries" t-as="q" t-key="q_index">
+                                <div class="list-group-item p-2">
+                                    <div class="d-flex justify-content-between mb-1">
+                                        <span class="badge bg-light text-dark">#<t t-esc="q_index + 1"/></span>
+                                        <span class="small text-muted font-monospace"><t t-esc="q.time?.toFixed(4)"/>s</span>
+                                    </div>
+                                    <pre class="m-0 x-small bg-light p-2 rounded text-break" style="max-height: 100px; overflow-y: auto;"><t t-esc="q.sql"/></pre>
+                                </div>
+                            </t>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </t>
+
+</templates>

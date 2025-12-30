@@ -17,7 +17,7 @@ Solo usuarios con grupo 'Administration / Settings' pueden usar el shell.
     'author': "MAIKOL AGUILAR",
     'website': "https://github.com/maikCyphlock",
     'category': 'Technical',
-    'version': '1.0',
+    'version': '1.1',
     'depends': ['base', 'web', 'bus'],
     'data': [
         'security/ir.model.access.csv',
@@ -28,6 +28,7 @@ Solo usuarios con grupo 'Administration / Settings' pueden usar el shell.
             'https://cdn.jsdelivr.net/npm/ace-builds@1.32.2/src-min-noconflict/ace.js',
             'web_shell/static/src/components/console/*',
             'web_shell/static/src/components/log_viewer/*',
+            'web_shell/static/src/components/debug_tools/*',
         ],
     },
     'license': 'OPL-1',

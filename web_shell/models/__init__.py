@@ -1,5 +1,8 @@
 from . import console
 from . import log_handler
+from . import debug_tools
+
+from . import debug_tools
 
 # Register the log handler once
 import logging

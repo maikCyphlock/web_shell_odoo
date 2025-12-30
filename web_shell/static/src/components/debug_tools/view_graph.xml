@@ -1,0 +1,180 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+
+    <t t-name="web_shell.ViewGraph" owl="1">
+        <div class="ws-view-graph h-100 d-flex flex-column bg-white">
+            
+            <!-- Search Interface -->
+            <div t-if="state.mode === 'search'" class="h-100 d-flex flex-column">
+                <div class="p-3 border-bottom bg-light">
+                    <div class="input-group">
+                        <span class="input-group-text bg-white"><i class="fa fa-search text-muted"></i></span>
+                        <input type="text" 
+                               class="form-control" 
+                               placeholder="Search view by name, model, or XML ID..." 
+                               t-model="state.searchQuery" 
+                               t-ref="searchInput"
+                               t-on-keydown="onSearchKeydown"/>
+                        <button class="btn btn-primary" t-on-click="searchViews" t-att-disabled="state.loading">
+                            Search
+                        </button>
+                    </div>
+                </div>
+
+                <div class="flex-grow-1 overflow-auto p-0">
+                    <div t-if="state.loading" class="text-center mt-5">
+                         <i class="fa fa-spinner fa-spin fa-2x text-primary"></i>
+                    </div>
+                    <div t-elif="state.error" class="alert alert-danger m-3">
+                        <t t-esc="state.error"/>
+                    </div>
+                    <div t-elif="state.searchResults.length === 0 and state.searchQuery" class="text-center text-muted mt-5">
+                        <p>No views found matching "<t t-esc="state.searchQuery"/>"</p>
+                    </div>
+                    
+                    <div t-if="state.searchResults.length > 0" class="list-group list-group-flush border-bottom">
+                        <t t-foreach="state.searchResults" t-as="result" t-key="result.id">
+                            <button class="list-group-item list-group-item-action d-flex justify-content-between align-items-center"
+                                    t-on-click="() => this.selectView(result)">
+                                <div>
+                                    <div class="fw-bold text-primary"><t t-esc="result.name || 'Unnamed View'"/></div>
+                                    <div class="small text-muted">
+                                        <i class="fa fa-cube me-1"></i><t t-esc="result.model"/> 
+                                        <span class="mx-1">|</span> 
+                                        <i class="fa fa-code me-1"></i><t t-esc="result.xml_id || 'No XML ID'"/>
+                                    </div>
+                                </div>
+                                <span class="badge bg-light text-dark border">ID: <t t-esc="result.id"/></span>
+                            </button>
+                        </t>
+                    </div>
+                    
+                    <div t-if="!state.searchQuery and state.searchResults.length === 0" class="text-center text-muted mt-5">
+                        <i class="fa fa-sitemap fa-3x mb-3 text-light"></i>
+                        <p>Search for a view to explore its inheritance hierarchy.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Graph/Tree Interface (Full Width) -->
+            <div t-if="state.mode === 'tree'" class="h-100 d-flex flex-column">
+                <div class="p-2 border-bottom bg-light d-flex align-items-center justify-content-between">
+                    <div class="d-flex align-items-center">
+                        <button class="btn btn-sm btn-outline-secondary me-2" t-on-click="backToSearch">
+                            <i class="fa fa-arrow-left"></i> Back
+                        </button>
+                        <h6 class="m-0 text-muted text-truncate" style="max-width: 400px;">
+                            <span class="fw-bold" t-if="state.root"><t t-esc="state.root.name"/></span>
+                        </h6>
+                    </div>
+                    <div>
+                        <span class="badge bg-info me-2">Click a node to view diff</span>
+                        <span class="badge bg-secondary" t-if="state.root">ID: <t t-esc="state.root.id"/></span>
+                    </div>
+                </div>
+
+                <!-- Full Width Graph -->
+                <div class="flex-grow-1 overflow-auto p-4">
+                    <div t-if="state.loading" class="text-center mt-5">
+                        <i class="fa fa-spinner fa-spin fa-2x text-primary mb-2"></i>
+                        <p>Loading hierarchy...</p>
+                    </div>
+                    <div t-elif="state.error" class="alert alert-danger m-3">
+                        <t t-esc="state.error"/>
+                    </div>
+                    <div t-elif="state.root" class="ws-tree">
+                        <t t-call="web_shell.ViewGraphNode">
+                            <t t-set="node" t-value="state.root"/>
+                            <t t-set="is_root" t-value="true"/>
+                        </t>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Diff Modal Overlay -->
+            <div t-if="state.showDiffModal" class="ws-diff-overlay" t-on-click="closeDiffModal">
+                <div class="ws-diff-modal" t-on-click.stop="">
+                    <div class="ws-diff-modal-header">
+                        <div>
+                            <h5 class="m-0">
+                                <i class="fa fa-code-fork text-primary me-2"></i>
+                                <t t-esc="state.selectedNode?.name || 'View Diff'"/>
+                            </h5>
+                            <small class="text-muted"><t t-esc="state.selectedNode?.xml_id"/></small>
+                        </div>
+                        <button class="btn btn-sm btn-outline-secondary" t-on-click="closeDiffModal">
+                            <i class="fa fa-times"></i> Close
+                        </button>
+                    </div>
+                    <div class="ws-diff-modal-body">
+                        <div t-if="state.diffLoading" class="text-center p-5">
+                            <i class="fa fa-spinner fa-spin fa-2x text-primary"></i>
+                            <p class="mt-2">Loading diff...</p>
+                        </div>
+                        <div t-elif="state.diff" class="ws-diff-container">
+                            <t t-foreach="state.diff" t-as="line" t-key="line_index">
+                                <div class="ws-diff-line">
+                                    <span class="ws-diff-line-num"><t t-esc="line_index + 1"/></span>
+                                    <pre class="m-0 flex-grow-1" 
+                                         t-att-class="{
+                                            'ws-diff-add': line.startsWith('+'),
+                                            'ws-diff-rem': line.startsWith('-'),
+                                            'ws-diff-info': line.startsWith('@'),
+                                            'ws-diff-ctx': !line.startsWith('+') and !line.startsWith('-') and !line.startsWith('@')
+                                         }"><t t-esc="line"/></pre>
+                                </div>
+                            </t>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </t>
+
+    <t t-name="web_shell.ViewGraphNode" owl="1">
+        <div class="ws-node-wrapper">
+            <div class="d-flex align-items-start">
+                <!-- Toggle Arrow -->
+                <div class="ws-toggle-arrow me-1" style="width: 20px;">
+                    <button t-if="node.children.length > 0" 
+                            class="btn btn-sm btn-link p-0 text-muted"
+                            t-on-click="(ev) => this.toggleNode(node.id, ev)"
+                            t-att-title="this.isNodeCollapsed(node.id) ? 'Expand' : 'Collapse'">
+                        <i t-att-class="this.isNodeCollapsed(node.id) ? 'fa fa-chevron-right' : 'fa fa-chevron-down'"></i>
+                    </button>
+                </div>
+                
+                <!-- Node Content -->
+                <div class="ws-node p-2 border rounded shadow-sm mb-2 d-inline-block flex-grow-1"
+                     t-att-class="is_root ? 'border-primary bg-primary bg-opacity-10' : 'bg-white'"
+                     t-on-click="() => this.onNodeClick(node)">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span class="small fw-bold text-truncate" style="max-width: 300px;" t-att-title="node.name">
+                            <t t-esc="node.name"/>
+                        </span>
+                        <i class="fa fa-eye ms-2 text-muted" title="Click to view diff"></i>
+                    </div>
+                    <div class="x-small text-muted text-truncate" style="max-width: 300px;" t-att-title="node.xml_id">
+                        <t t-esc="node.xml_id"/>
+                    </div>
+                    <div t-if="node.children.length > 0" class="mt-1">
+                        <span class="badge rounded-pill bg-secondary x-small">
+                            <t t-esc="node.children.length"/> inherits
+                        </span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Children (collapsible) -->
+            <div t-if="node.children.length > 0 and !this.isNodeCollapsed(node.id)" class="ws-children ms-4 ps-2 border-start">
+                <t t-foreach="node.children" t-as="child" t-key="child.id">
+                    <t t-call="web_shell.ViewGraphNode">
+                        <t t-set="node" t-value="child"/>
+                        <t t-set="is_root" t-value="false"/>
+                    </t>
+                </t>
+            </div>
+        </div>
+    </t>
+
+</templates>

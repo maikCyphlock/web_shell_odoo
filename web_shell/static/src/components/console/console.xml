@@ -38,20 +38,42 @@
 
                 <!-- Right: Log Viewer -->
                 <div class="o_shell_right d-flex flex-column border-start border-secondary">
-                    <div class="d-flex justify-content-between align-items-center border-bottom border-dark p-2 bg-dark">
-                        <span class="fw-bold small text-light">INSTANCE LOGS</span>
-                        <button class="btn btn-sm btn-outline-secondary py-0" t-on-click="clearLogs">CLEAR</button>
+                    <!-- Tabs Header -->
+                    <div class="d-flex border-bottom border-dark bg-dark">
+                        <button class="btn btn-sm flex-grow-1 rounded-0 py-2 border-end border-secondary" 
+                            t-att-class="state.activeRightTab === 'logs' ? 'btn-secondary text-white' : 'btn-dark text-muted'"
+                            t-on-click="() => this.state.activeRightTab = 'logs'">
+                            <i class="fa fa-list-alt"></i> LOGS
+                        </button>
+                        <button class="btn btn-sm flex-grow-1 rounded-0 py-2" 
+                            t-att-class="state.activeRightTab === 'debug' ? 'btn-secondary text-white' : 'btn-dark text-muted'"
+                            t-on-click="() => this.state.activeRightTab = 'debug'">
+                            <i class="fa fa-bug"></i> DEBUG TOOLS
+                        </button>
                     </div>
-                    <div class="flex-grow-1 overflow-auto o_log_output" t-ref="logRef">
-                        <t t-foreach="state.logs" t-as="log" t-key="log_index">
-                            <div class="mb-1 border-bottom border-secondary pb-1 small">
-                                <span class="text-muted me-2" t-esc="log.time"/>
-                                <span t-attf-class="fw-bold me-2 {{ getLogLevelClass(log.level) }}" t-esc="log.level"/>
-                                <span class="text-warning me-2" t-esc="log.name"/>
-                                <span class="text-light" t-esc="log.message"/>
-                            </div>
-                        </t>
-                    </div>
+
+                    <!-- Logs View -->
+                    <t t-if="state.activeRightTab === 'logs'">
+                        <div class="d-flex justify-content-between align-items-center border-bottom border-secondary p-1 bg-dark">
+                             <div class="small ps-2 text-light opacity-50">Instance Log Stream</div>
+                             <button class="btn btn-sm btn-link text-decoration-none text-muted" t-on-click="clearLogs">CLEAR</button>
+                        </div>
+                        <div class="flex-grow-1 overflow-auto o_log_output" t-ref="logRef">
+                            <t t-foreach="state.logs" t-as="log" t-key="log_index">
+                                <div class="mb-1 border-bottom border-secondary pb-1 small">
+                                    <span class="text-muted me-2" t-esc="log.time"/>
+                                    <span t-attf-class="fw-bold me-2 {{ getLogLevelClass(log.level) }}" t-esc="log.level"/>
+                                    <span class="text-warning me-2" t-esc="log.name"/>
+                                    <span class="text-light" t-esc="log.message"/>
+                                </div>
+                            </t>
+                        </div>
+                    </t>
+
+                    <!-- Debug Tools View -->
+                    <t t-if="state.activeRightTab === 'debug'">
+                        <DebugTools />
+                    </t>
                 </div>
             </div>
         </div>
