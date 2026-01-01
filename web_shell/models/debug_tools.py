@@ -11,6 +11,7 @@ def get_cache_info(env, model_name, record_id):
     Inspects the ORM cache for a specific record.
     """
     _logger.info(f"WebShell: Inspecting cache for {model_name}({record_id})")
+
     try:
         if model_name not in env:
             return {"error": f"Model {model_name} not found"}
