@@ -3,6 +3,7 @@
 # Created by MAIKOL AGUILAR (https://github.com/maikCyphlock)
 
 import logging
+import odoo
 from odoo.http import request
 
 _logger = logging.getLogger(__name__)

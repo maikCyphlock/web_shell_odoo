@@ -94,6 +94,10 @@ class WebShellConsole(models.Model):
         # SECURITY: Check for blocked patterns
         self._check_blocked_patterns(code)
 
+        # Performance Audit Initialization
+        start_queries = self.env.cr.sql_log_count
+        start_time = time.time()
+
         # Initialize user session if needed (only user variables, no env/self!)
         if user_id not in SESSION_LOCALS:
             SESSION_LOCALS[user_id] = {}
@@ -131,7 +135,6 @@ class WebShellConsole(models.Model):
         class SafeModeRollback(Exception):
             pass
 
-        result = None
         timeout_enabled = False
         try:
             # Set timeout (only works on Unix)
@@ -191,14 +194,37 @@ class WebShellConsole(models.Model):
                 SESSION_LOCALS[user_id][key] = value
 
         output = stdout_capture.getvalue() + stderr_capture.getvalue()
-        return output
+
+        # Performance Audit
+        end_queries = self.env.cr.sql_log_count
+        end_time = time.time()
+
+        todo_fields = []
+        # Expert feature: track which fields were triggered for recomputation during this execution
+        # Odoo 17 stores them in env.all.todo
+        try:
+            if hasattr(self.env, "all") and hasattr(self.env.all, "todo"):
+                for model_name, fields_recordsets in self.env.all.todo.items():
+                    for field in fields_recordsets:
+                        todo_fields.append(f"{model_name}.{field.name}")
+        except Exception:
+            pass
+
+        return {
+            "output": output,
+            "audit": {
+                "queries": end_queries - start_queries,
+                "time_ms": (end_time - start_time) * 1000,
+                "todo_fields": list(set(todo_fields)),
+            },
+        }
 
     @api.model
     def test_log(self):
         """Generates test logs at different levels"""
         logger = logging.getLogger("odoo.addons.web_shell")
-        logger.info("Test INFO log from Web Shell")
-        logger.warning("Test WARNING log from Web Shell")
+        logger.info("Test INFO log from Odoo DevTools")
+        logger.warning("Test WARNING log from Odoo DevTools")
         return True
 
     @api.model
@@ -275,6 +301,44 @@ class WebShellConsole(models.Model):
                     result["name"] = parts[4] if len(parts) > 4 else ""
                     result["message"] = parts[5] if len(parts) > 5 else ""
         return result
+
+    @api.model
+    def get_environment_info_rpc(self):
+        """Returns details about the current Odoo environment."""
+        if not self.env.user.has_group("base.group_system"):
+            raise Exception("Access Denied")
+
+        ctx = dict(self.env.context or {})
+
+        # Build response with defensive access
+        try:
+            companies = self.env.user.company_ids.mapped("name")
+        except Exception:
+            companies = []
+
+        try:
+            allowed_companies = self.env.companies.mapped("name")
+        except Exception:
+            allowed_companies = []
+
+        try:
+            active_company = self.env.company.name
+        except Exception:
+            active_company = "N/A"
+
+        return {
+            "uid": self.env.uid,
+            "user": self.env.user.name or "Unknown",
+            "login": self.env.user.login or "Unknown",
+            "lang": self.env.lang or "en_US",
+            "tz": ctx.get("tz") or "UTC",
+            "companies": companies,
+            "active_company": active_company,
+            "allowed_companies": allowed_companies,
+            "context": ctx,
+            "registry_size": len(self.env.registry) if self.env.registry else 0,
+            "odoo_version": "17.0",
+        }
 
     @api.model
     def get_cache_info_rpc(self, model, record_id):
@@ -468,7 +532,7 @@ class WebShellConsole(models.Model):
     @api.model
     def get_model_relations_rpc(self, model_name):
         """
-        Returns info about relational fields (M2o, O2m, M2m) for a given model.
+        Returns info about ALL fields for a given model, grouped by type.
         """
         if not self.env.user.has_group("base.group_system"):
             raise Exception("Access Denied")
@@ -477,27 +541,58 @@ class WebShellConsole(models.Model):
             return {"error": f"Model '{model_name}' not found."}
 
         Model = self.env[model_name]
+        # Use fields_get for standard metadata
         fields_info = Model.fields_get(
-            attributes=["type", "relation", "string", "help"]
+            attributes=[
+                "string",
+                "help",
+                "type",
+                "relation",
+                "required",
+                "readonly",
+                "selection",
+            ]
         )
 
         relations = []
-        for field_name, info in fields_info.items():
-            if info["type"] in ("many2one", "one2many", "many2many"):
-                relations.append(
-                    {
-                        "name": field_name,
-                        "string": info["string"],
-                        "type": info["type"],
-                        "relation": info["relation"],
-                        "help": info.get("help", ""),
-                    }
-                )
+        basic_fields = []
+        computed_fields = []
+
+        # Iterate over _fields to get the actual field objects for accurate property access
+        for field_name, field in Model._fields.items():
+            if field_name not in fields_info:
+                continue
+
+            info = fields_info[field_name]
+
+            field_data = {
+                "name": field_name,
+                "string": info.get("string", field.string or field_name),
+                "type": info["type"],
+                "required": field.required,
+                "readonly": field.readonly,
+                "store": field.store,
+                "help": info.get("help", field.help or ""),
+            }
+
+            # Check if field is relational
+            if field.type in ("many2one", "one2many", "many2many"):
+                field_data["relation"] = field.comodel_name
+                relations.append(field_data)
+            # Check if field is computed (and not stored, or stored but computed)
+            elif field.compute:
+                field_data["compute"] = True
+                computed_fields.append(field_data)
+            else:
+                basic_fields.append(field_data)
 
         return {
             "model": model_name,
             "description": Model._description,
             "relations": relations,
+            "basic_fields": basic_fields,
+            "computed_fields": computed_fields,
+            "total_fields": len(fields_info),
         }
 
     @api.model

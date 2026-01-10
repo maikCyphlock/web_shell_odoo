@@ -1,5 +1,5 @@
 {
-    "name": "Web Shell",
+    "name": "Odoo DevTools",
     "summary": "Frontend Python Shell & Log Viewer (Development Tool)",
     "description": """
 ! ADVERTENCIA DE SEGURIDAD !

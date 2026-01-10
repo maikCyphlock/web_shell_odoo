@@ -3,29 +3,37 @@
 
     <t t-name="web_shell.DebugTools" owl="1">
         <div class="ws-debug-tools d-flex flex-column h-100 bg-light border-start">
-            <div class="d-flex border-bottom bg-white">
-                <button class="btn btn-link rounded-0 text-decoration-none flex-grow-1 p-2"
+            <div class="d-flex border-bottom bg-white overflow-auto">
+                <button class="btn btn-link rounded-0 text-decoration-none p-2 px-3"
+                        t-att-class="state.activeTab === 'env' ? 'border-bottom border-primary fw-bold text-primary' : 'text-muted'"
+                        t-on-click="() => this.switchTab('env')">
+                    <i class="fa fa-info-circle me-1"></i>Env
+                </button>
+                <button class="btn btn-link rounded-0 text-decoration-none p-2 px-3"
                         t-att-class="state.activeTab === 'inspector' ? 'border-bottom border-primary fw-bold text-primary' : 'text-muted'"
                         t-on-click="() => this.switchTab('inspector')">
-                    <i class="fa fa-database me-2"></i>Inspector
+                    <i class="fa fa-database me-1"></i>Inspector
                 </button>
-                <button class="btn btn-link rounded-0 text-decoration-none flex-grow-1 p-2"
+                <button class="btn btn-link rounded-0 text-decoration-none p-2 px-3"
                         t-att-class="state.activeTab === 'graph' ? 'border-bottom border-primary fw-bold text-primary' : 'text-muted'"
                         t-on-click="() => this.switchTab('graph')">
-                    <i class="fa fa-sitemap me-2"></i>Graph
+                    <i class="fa fa-sitemap me-1"></i>Graph
                 </button>
-                <button class="btn btn-link rounded-0 text-decoration-none flex-grow-1 p-2"
+                <button class="btn btn-link rounded-0 text-decoration-none p-2 px-3"
                         t-att-class="state.activeTab === 'models' ? 'border-bottom border-primary fw-bold text-primary' : 'text-muted'"
                         t-on-click="() => this.switchTab('models')">
-                    <i class="fa fa-project-diagram me-2"></i>Models
+                    <i class="fa fa-project-diagram me-1"></i>Models
                 </button>
-                <button class="btn btn-link rounded-0 text-decoration-none flex-grow-1 p-2"
+                <button class="btn btn-link rounded-0 text-decoration-none p-2 px-3"
                         t-att-class="state.activeTab === 'profiler' ? 'border-bottom border-primary fw-bold text-primary' : 'text-muted'"
                         t-on-click="() => this.switchTab('profiler')">
-                    <i class="fa fa-tachometer-alt me-2"></i>Profiler
+                    <i class="fa fa-tachometer-alt me-1"></i>Profiler
                 </button>
             </div>
             <div class="flex-grow-1 overflow-auto position-relative">
+                <div t-if="state.activeTab === 'env'" class="h-100">
+                    <EnvExplorer/>
+                </div>
                 <div t-if="state.activeTab === 'inspector'" class="h-100">
                     <CacheViewer onShowGraph="(viewId) => this.openViewGraph(viewId)"/>
                 </div>

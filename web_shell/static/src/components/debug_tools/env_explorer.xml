@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+    <t t-name="web_shell.EnvExplorer" owl="1">
+        <div class="ws-env-explorer h-100 d-flex flex-column p-3 bg-white">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="mb-0"><i class="fa fa-info-circle text-info"></i> Environment Details</h5>
+                <button class="btn btn-sm btn-outline-secondary" t-on-click="loadEnvInfo" t-att-disabled="state.loading">
+                    <i t-att-class="state.loading ? 'fa fa-spinner fa-spin' : 'fa fa-refresh'"/>
+                </button>
+            </div>
+
+            <div t-if="state.error" class="alert alert-danger p-2 small">
+                <t t-esc="state.error"/>
+            </div>
+
+            <div t-if="state.data" class="flex-grow-1 overflow-auto">
+                <table class="table table-sm small">
+                    <tbody>
+                        <tr>
+                            <th class="text-muted">User</th>
+                            <td><t t-esc="state.data.user"/> (<t t-esc="state.data.login"/>)</td>
+                        </tr>
+                        <tr>
+                            <th class="text-muted">UID</th>
+                            <td><t t-esc="state.data.uid"/></td>
+                        </tr>
+                        <tr>
+                            <th class="text-muted">Language</th>
+                            <td><t t-esc="state.data.lang"/></td>
+                        </tr>
+                        <tr>
+                            <th class="text-muted">Timezone</th>
+                            <td><t t-esc="state.data.tz"/></td>
+                        </tr>
+                         <tr>
+                            <th class="text-muted">Active Company</th>
+                            <td><t t-esc="state.data.active_company"/></td>
+                        </tr>
+                        <tr>
+                            <th class="text-muted">Allowed Companies</th>
+                            <td><t t-esc="state.data.allowed_companies.join(', ')"/></td>
+                        </tr>
+                        <tr>
+                            <th class="text-muted">Registry Size</th>
+                            <td><t t-esc="state.data.registry_size"/> models</td>
+                        </tr>
+                        <tr>
+                            <th class="text-muted">Odoo Version</th>
+                            <td><t t-esc="state.data.odoo_version"/></td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h6 class="mt-4 text-primary border-bottom pb-1">Context (env.context)</h6>
+                <div class="bg-light p-2 rounded font-monospace small border">
+                    <pre class="m-0"><t t-esc="this.formatContext()"/></pre>
+                </div>
+            </div>
+        </div>
+    </t>
+</templates>

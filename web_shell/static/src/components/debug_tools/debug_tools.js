@@ -5,15 +5,16 @@ import { CacheViewer } from "./cache_viewer";
 import { ViewGraph } from "./view_graph";
 import { ModelGraph } from "./model_graph";
 import { ORMProfiler } from "./orm_profiler";
+import { EnvExplorer } from "./env_explorer";
 
 export class DebugTools extends Component {
     static template = "web_shell.DebugTools";
-    static components = { CacheViewer, ViewGraph, ModelGraph, ORMProfiler };
+    static components = { CacheViewer, ViewGraph, ModelGraph, ORMProfiler, EnvExplorer };
 
     setup() {
         this.state = useState({
-            activeTab: 'inspector', // 'inspector', 'graph', 'models', or 'profiler'
-            targetViewId: null,
+            activeTab: 'env', // 'env', 'inspector', 'graph', 'models', or 'profiler'
+            targetViewId: undefined,
         });
     }
 

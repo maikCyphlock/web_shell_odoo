@@ -1,6 +1,6 @@
 /** @odoo-module **/
 /*
-    Part of Web Shell. See LICENSE file for full copyright and licensing details.
+    Part of Odoo DevTools. See LICENSE file for full copyright and licensing details.
     Created by MAIKOL AGUILAR (https://github.com/maikCyphlock)
 */
 
@@ -93,7 +93,7 @@ export class WebShellConsole extends Component {
         // Add custom keyboard shortcuts
         this.editor.commands.addCommand({
             name: 'execute',
-            bindKey: { win: 'Ctrl-Enter', mac: 'Cmd-Enter' },
+            bindKey: { win: 'Ctrl-Shift-Enter', mac: 'Cmd-Shift-Enter' },
             exec: () => {
                 this.executeCommand();
             }
@@ -184,7 +184,14 @@ export class WebShellConsole extends Component {
             const result = await this.orm.call("web.shell.console", "execute_command", [cmd], {
                 safe_mode: this.state.safeMode,
             });
-            if (result) {
+
+            if (result && typeof result === 'object' && result.output !== undefined) {
+                this.state.history.push({
+                    type: 'output',
+                    text: result.output,
+                    audit: result.audit
+                });
+            } else if (result) {
                 this.state.history.push({ type: 'output', text: result });
             }
         } catch (error) {

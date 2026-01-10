@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import logging
+import odoo
 from odoo import models
 
 _logger = logging.getLogger(__name__)
@@ -11,7 +12,6 @@ def get_cache_info(env, model_name, record_id):
     Inspects the ORM cache for a specific record.
     """
     _logger.info(f"WebShell: Inspecting cache for {model_name}({record_id})")
-
     try:
         if model_name not in env:
             return {"error": f"Model {model_name} not found"}

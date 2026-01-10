@@ -14,6 +14,19 @@
                             </div>
                             <div t-if="line.type === 'output'" class="o_history_output">
                                 <t t-esc="line.text"/>
+                                <div t-if="line.audit" class="o_audit_info d-flex gap-2 mt-1 small opacity-75">
+                                    <span title="SQL Queries" class="badge rounded-pill bg-dark border border-secondary text-info">
+                                        <i class="fa fa-database me-1"></i><t t-esc="line.audit.queries"/> q
+                                    </span>
+                                    <span title="Execution Time" class="badge rounded-pill bg-dark border border-secondary text-warning">
+                                        <i class="fa fa-clock-o me-1"></i><t t-esc="Math.round(line.audit.time_ms)"/>ms
+                                    </span>
+                                    <span t-if="line.audit.todo_fields &amp;&amp; line.audit.todo_fields.length > 0" 
+                                          title="Computed fields triggered" 
+                                          class="badge rounded-pill bg-dark border border-secondary text-success">
+                                        <i class="fa fa-magic me-1"></i><t t-esc="line.audit.todo_fields.length"/> fields
+                                    </span>
+                                </div>
                             </div>
                             <div t-if="line.type === 'error'" class="o_history_error">
                                 <t t-esc="line.text"/>
@@ -24,7 +37,7 @@
                     <!-- Input Area with Ace Editor -->
                     <div class="o_input_wrapper">
                         <div class="o_input_header d-flex justify-content-between align-items-center">
-                            <span>🚀 CTRL+ENTER to execute | TAB to indent | CTRL+↑↓ for history | Ace Editor</span>
+                            <span>🚀 CTRL+Shift+ENTER para ejecutar | TAB para indentar | CTRL+↑↓ para historial | Ace Editor</span>
                             <div class="form-check form-switch me-2">
                                 <input class="form-check-input" type="checkbox" id="safeModeSwitch" t-model="state.safeMode"/>
                                 <label class="form-check-label text-warning fw-bold" for="safeModeSwitch">
@@ -40,11 +53,7 @@
                 <div class="o_shell_right d-flex flex-column border-start border-secondary">
                     <!-- Tabs Header -->
                     <div class="d-flex border-bottom border-dark bg-dark">
-                        <button class="btn btn-sm flex-grow-1 rounded-0 py-2 border-end border-secondary" 
-                            t-att-class="state.activeRightTab === 'logs' ? 'btn-secondary text-white' : 'btn-dark text-muted'"
-                            t-on-click="() => this.state.activeRightTab = 'logs'">
-                            <i class="fa fa-list-alt"></i> LOGS
-                        </button>
+                
                         <button class="btn btn-sm flex-grow-1 rounded-0 py-2" 
                             t-att-class="state.activeRightTab === 'debug' ? 'btn-secondary text-white' : 'btn-dark text-muted'"
                             t-on-click="() => this.state.activeRightTab = 'debug'">
@@ -52,24 +61,7 @@
                         </button>
                     </div>
 
-                    <!-- Logs View -->
-                    <t t-if="state.activeRightTab === 'logs'">
-                        <div class="d-flex justify-content-between align-items-center border-bottom border-secondary p-1 bg-dark">
-                             <div class="small ps-2 text-light opacity-50">Instance Log Stream</div>
-                             <button class="btn btn-sm btn-link text-decoration-none text-muted" t-on-click="clearLogs">CLEAR</button>
-                        </div>
-                        <div class="flex-grow-1 overflow-auto o_log_output" t-ref="logRef">
-                            <t t-foreach="state.logs" t-as="log" t-key="log_index">
-                                <div class="mb-1 border-bottom border-secondary pb-1 small">
-                                    <span class="text-muted me-2" t-esc="log.time"/>
-                                    <span t-attf-class="fw-bold me-2 {{ getLogLevelClass(log.level) }}" t-esc="log.level"/>
-                                    <span class="text-warning me-2" t-esc="log.name"/>
-                                    <span class="text-light" t-esc="log.message"/>
-                                </div>
-                            </t>
-                        </div>
-                    </t>
-
+                    
                     <!-- Debug Tools View -->
                     <t t-if="state.activeRightTab === 'debug'">
                         <DebugTools />

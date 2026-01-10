@@ -6,7 +6,7 @@ import { useService } from "@web/core/utils/hooks";
 export class ViewGraph extends Component {
     static template = "web_shell.ViewGraph";
     static props = {
-        initialViewId: { type: Number, optional: true },
+        initialViewId: { type: [Number, { value: null }], optional: true },
     };
 
     setup() {
