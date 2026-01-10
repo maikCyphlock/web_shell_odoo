@@ -1,7 +1,7 @@
 # Web Shell Odoo
 
 [![Version](https://img.shields.io/badge/version-1.2.0-blue.svg)](https://github.com/maikCyphlock/web_shell_odoo/releases/tag/v1.2.0)
-[![License](https://img.shields.io/badge/license-OPL--1-green.svg)](https://github.com/maikCyphlock/web_shell_odoo/blob/main/web_shell/LICENSE)
+[![License](https://img.shields.io/badge/license-OPL--1.0-green.svg)](https://github.com/maikCyphlock/web_shell_odoo/blob/main/web_shell/LICENSE)
 
 Frontend Python Shell & Real-time Log Viewer for Odoo.
 
@@ -182,7 +182,7 @@ See [CHANGELOG.md](CHANGELOG.md) for a list of changes and version history.
 
 ## 📄 License
 
-This project is licensed under the OPL-1 License - see the [LICENSE](web_shell/LICENSE) file for details.
+This project is licensed under the OPL-1.0 License - see the [LICENSE](web_shell/LICENSE) file for details.
 
 ## 🙏 Acknowledgments
 
