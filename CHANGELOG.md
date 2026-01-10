@@ -27,6 +27,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Enhanced UI with modern flat design
 - Refactored log viewer to support multiple log sources
 - Updated dependency requirements for Odoo 14+
+- Optimized log viewer polling to only run when panel is visible, reducing server load
+- Added filtering of polling-related log messages in the log viewer to reduce noise
+- Prevented server-side logging of log polling requests by setting nolog flag
+- Added resizable width functionality to the log panel with persistent storage
 
 ### Fixed
 - Fixed console output encoding issues with special characters

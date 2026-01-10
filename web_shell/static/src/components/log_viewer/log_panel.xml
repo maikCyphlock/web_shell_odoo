@@ -1,11 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <templates xml:space="preserve">
     <t t-name="web_shell.LogPanel" owl="1">
-        <div t-if="state.visible" 
-             class="o_log_panel" 
-             t-ref="panelRef"
-             t-att-style="`top: ${state.position.top}px; right: ${state.position.right}px;`">
-            
+        <div t-if="state.visible"
+              class="o_log_panel"
+              t-ref="panelRef"
+              t-att-style="`top: ${state.position.top}px; right: ${state.position.right}px; width: ${state.width}px;`">
+
+            <!-- Resize handle -->
+            <div class="o_log_panel_resize" t-on-mousedown="onResizeStart"></div>
+
             <!-- Header (draggable) -->
             <div class="o_log_panel_header" t-ref="headerRef" t-on-mousedown="onDragStart">
                 <span class="o_log_panel_title">

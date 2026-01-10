@@ -10,6 +10,7 @@ import difflib
 from lxml import etree
 
 from odoo import models, api, fields
+from odoo.http import request
 from odoo.tools.profiler import Profiler
 import time
 import contextlib
@@ -295,6 +296,9 @@ class WebShellConsole(models.Model):
         Reads logs directly from the Odoo log file.
         Returns: { 'lines': [...], 'position': new_pos, 'error': ... }
         """
+        # Skip logging this request to avoid noise in debug console
+        request.httprequest.nolog = True
+
         if not self.env.user.has_group("base.group_system"):
             raise Exception("Access Denied")
 

@@ -1,6 +1,5 @@
 .o_log_panel {
     position: fixed;
-    width: 500px;
     height: 400px;
     background-color: #1e1e1e;
     border: 1px solid #444;
@@ -10,6 +9,21 @@
     display: flex;
     flex-direction: column;
     overflow: hidden;
+
+    .o_log_panel_resize {
+        position: absolute;
+        left: -5px;
+        top: 0;
+        width: 10px;
+        height: 100%;
+        cursor: ew-resize;
+        background-color: transparent;
+        z-index: 10000;
+
+        &:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+    }
 
     .o_log_panel_header {
         background-color: #252526;

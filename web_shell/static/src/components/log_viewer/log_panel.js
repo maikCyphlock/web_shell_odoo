@@ -19,7 +19,9 @@ export class LogPanel extends Component {
             visible: false,
             logs: [],
             position: this.loadPosition(),
+            width: this.loadWidth(),
             dragging: false,
+            resizing: false,
             recording: true,
             error: null,
         });
@@ -27,19 +29,21 @@ export class LogPanel extends Component {
         this.dragStart = { x: 0, y: 0 };
         this.onWindowMouseUp = this.onDragEnd.bind(this);
         this.onWindowMouseMove = this.onDragMove.bind(this);
+        this.onResizeEnd = this.onResizeEnd.bind(this);
+        this.onResizeMove = this.onResizeMove.bind(this);
         this.lastPosition = 0;
         this.pollInterval = null;
 
         onMounted(() => {
             window.addEventListener('toggle_log_panel', this.togglePanel.bind(this));
-            // Start polling when mounted
-            this.startPolling();
+            this.updatePolling();
         });
 
         onWillUnmount(() => {
             window.removeEventListener('toggle_log_panel', this.togglePanel.bind(this));
             this.stopPolling();
             this.cleanupDragListeners();
+            this.cleanupResizeListeners();
         });
     }
 
@@ -74,9 +78,11 @@ export class LogPanel extends Component {
             this.state.error = null;
 
             if (result.lines && result.lines.length > 0) {
-                // Append new logs
+                // Append new logs, filtering out read_logs requests
                 for (const log of result.lines) {
-                    this.state.logs.push(log);
+                    if (!log.message.includes('/web/dataset/call_kw/web.shell.console/read_logs')) {
+                        this.state.logs.push(log);
+                    }
                 }
                 // Limit total logs
                 while (this.state.logs.length > 500) {
@@ -102,12 +108,22 @@ export class LogPanel extends Component {
         return { top: 100, right: 20 };
     }
 
+    loadWidth() {
+        const saved = localStorage.getItem('web_shell_log_panel_width');
+        return saved ? parseInt(saved) : 500;
+    }
+
     savePosition() {
         localStorage.setItem('web_shell_log_panel_position', JSON.stringify(this.state.position));
     }
 
+    saveWidth() {
+        localStorage.setItem('web_shell_log_panel_width', this.state.width);
+    }
+
     togglePanel() {
         this.state.visible = !this.state.visible;
+        this.updatePolling();
     }
 
     closePanel() {
@@ -116,6 +132,15 @@ export class LogPanel extends Component {
 
     toggleRecording() {
         this.state.recording = !this.state.recording;
+        this.updatePolling();
+    }
+
+    updatePolling() {
+        if (this.state.recording && this.state.visible) {
+            this.startPolling();
+        } else {
+            this.stopPolling();
+        }
     }
 
     clearLogs() {
@@ -174,6 +199,39 @@ export class LogPanel extends Component {
     cleanupDragListeners() {
         window.removeEventListener('mousemove', this.onWindowMouseMove);
         window.removeEventListener('mouseup', this.onWindowMouseUp);
+    }
+
+    // Resizing Logic
+    onResizeStart(ev) {
+        this.state.resizing = true;
+        this.resizeStartX = ev.clientX;
+        this.initialWidth = this.state.width;
+
+        window.addEventListener('mousemove', this.onResizeMove);
+        window.addEventListener('mouseup', this.onResizeEnd);
+        ev.preventDefault();
+    }
+
+    onResizeMove(ev) {
+        if (!this.state.resizing) return;
+
+        const dx = this.resizeStartX - ev.clientX;
+        let newWidth = this.initialWidth + dx;
+
+        newWidth = Math.max(300, Math.min(newWidth, window.innerWidth - this.state.position.right - 50));
+
+        this.state.width = newWidth;
+    }
+
+    onResizeEnd() {
+        this.state.resizing = false;
+        this.cleanupResizeListeners();
+        this.saveWidth();
+    }
+
+    cleanupResizeListeners() {
+        window.removeEventListener('mousemove', this.onResizeMove);
+        window.removeEventListener('mouseup', this.onResizeEnd);
     }
 
     getLogLevelClass(level) {
