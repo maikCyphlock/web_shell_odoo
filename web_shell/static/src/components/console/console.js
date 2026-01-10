@@ -34,6 +34,8 @@ export class WebShellConsole extends Component {
             historyIndex: -1,
             safeMode: true,
             activeRightTab: 'logs',
+            maxHistory: 200,
+            maxLogs: 300,
         });
 
         onWillStart(() => {
@@ -48,10 +50,18 @@ export class WebShellConsole extends Component {
             this.busService.addEventListener("notification", this.onNotification.bind(this));
         });
 
-        onWillUnmount(() => {
+        onWillUnmount(async () => {
             // Ace cleanup
             if (this.editor) {
                 this.editor.destroy();
+            }
+
+            // Cleanup session on server side to prevent memory leaks
+            // We don't need to pass user_id as it will use current user from context
+            try {
+                await this.orm.call("web.shell.console", "clear_user_session");
+            } catch (error) {
+                console.warn("Failed to cleanup session:", error);
             }
         });
 
@@ -119,12 +129,13 @@ export class WebShellConsole extends Component {
         this.editor.focus();
     }
 
-    onNotification({ detail: notifications }) {
+        onNotification({ detail: notifications }) {
         for (const { payload, type } of notifications) {
             if (type === "web_shell_log") {
                 this.state.logs.push(payload);
-                if (this.state.logs.length > 500) {
-                    this.state.logs.shift();
+                // Enforce log limit to prevent memory leaks
+                if (this.state.logs.length > this.state.maxLogs) {
+                    this.state.logs.splice(0, this.state.logs.length - this.state.maxLogs);
                 }
                 this.scrollToBottom(this.logRef);
             }
@@ -170,8 +181,19 @@ export class WebShellConsole extends Component {
         // Add to UI history
         this.state.history.push({ type: 'input', text: cmd, highlighted: highlighted });
 
+        // Enforce history limit to prevent memory leaks
+        if (this.state.history.length > this.state.maxHistory) {
+            this.state.history.splice(0, this.state.history.length - this.state.maxHistory);
+        }
+
         // Add to Command history
         this.state.commandHistory.push(cmd);
+
+        // Enforce command history limit
+        if (this.state.commandHistory.length > 100) {
+            this.state.commandHistory.splice(0, this.state.commandHistory.length - 100);
+        }
+
         this.state.historyIndex = -1;
 
         // Clear input
@@ -217,6 +239,17 @@ export class WebShellConsole extends Component {
 
     clearLogs() {
         this.state.logs = [];
+    }
+
+    clearHistory() {
+        this.state.history = [];
+        this.state.commandHistory = [];
+        this.state.historyIndex = -1;
+    }
+
+    cleanupAll() {
+        this.clearLogs();
+        this.clearHistory();
     }
 
     getLogLevelClass(level) {

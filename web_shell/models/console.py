@@ -22,6 +22,15 @@ _logger = logging.getLogger(__name__)
 # We ONLY store user-defined variables here, NOT env or self (which are request-specific)
 SESSION_LOCALS = {}
 
+# Session metadata: {user_id: {'last_active': timestamp}}
+SESSION_METADATA = {}
+
+# Maximum age for inactive sessions (in seconds) - 1 hour default
+SESSION_MAX_AGE = 3600
+
+# Maximum number of sessions before auto-cleanup
+MAX_SESSIONS = 100
+
 
 class WebShellConsole(models.Model):
     _name = "web.shell.console"
@@ -52,6 +61,53 @@ class WebShellConsole(models.Model):
         except ValueError:
             return 30
 
+    def _cleanup_old_sessions(self):
+        """Remove inactive sessions to prevent memory leaks."""
+        import time
+
+        current_time = time.time()
+        sessions_to_remove = []
+
+        for user_id, metadata in SESSION_METADATA.items():
+            if current_time - metadata.get("last_active", 0) > SESSION_MAX_AGE:
+                sessions_to_remove.append(user_id)
+
+        for user_id in sessions_to_remove:
+            SESSION_LOCALS.pop(user_id, None)
+            SESSION_METADATA.pop(user_id, None)
+            _logger.info(f"WebShell: Cleaned up inactive session for user {user_id}")
+
+        # Also enforce maximum session limit (remove oldest)
+        if len(SESSION_LOCALS) > MAX_SESSIONS:
+            sorted_sessions = sorted(
+                SESSION_METADATA.items(), key=lambda x: x[1].get("last_active", 0)
+            )
+            excess = len(SESSION_LOCALS) - MAX_SESSIONS
+            for user_id, _ in sorted_sessions[:excess]:
+                SESSION_LOCALS.pop(user_id, None)
+                SESSION_METADATA.pop(user_id, None)
+                _logger.info(
+                    f"WebShell: Removed old session for user {user_id} (max sessions limit)"
+                )
+
+    @api.model
+    def clear_user_session(self, user_id=None):
+        """
+        Clear session for a specific user or all sessions.
+        Returns number of sessions cleared.
+        """
+        if user_id:
+            cleared = SESSION_LOCALS.pop(user_id, None)
+            SESSION_METADATA.pop(user_id, None)
+            _logger.info(f"WebShell: Session cleared for user {user_id}")
+            return 1 if cleared else 0
+        else:
+            count = len(SESSION_LOCALS)
+            SESSION_LOCALS.clear()
+            SESSION_METADATA.clear()
+            _logger.info(f"WebShell: All {count} sessions cleared")
+            return count
+
     def _check_blocked_patterns(self, code):
         """Check if code contains any blocked patterns."""
         patterns = self._get_blocked_patterns()
@@ -81,6 +137,12 @@ class WebShellConsole(models.Model):
 
         user_id = self.env.user.id
         user_login = self.env.user.login
+
+        # MEMORY MANAGEMENT: Run cleanup periodically
+        self._cleanup_old_sessions()
+
+        # Update session metadata
+        SESSION_METADATA[user_id] = {"last_active": time.time()}
 
         # SECURITY: Audit logging
         _logger.warning(
