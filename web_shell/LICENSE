@@ -1,23 +1,34 @@
-Odoo Proprietary License v1.0
+Web Shell Odoo Commercial License
 
-This software and associated files (the "Software") may only be used (executed,
-modified, executed after modifications) with a valid Odoo Enterprise or Odoo
-Community subscription, or with a valid partnership contract with the holder
-of the copyright. You may develop Odoo modules based on the Software and
-distribute them under the license of your choice, provided that it is
-compatible with the terms of the Odoo Proprietary License (For example:
-LGPL, MIT, or proprietary licenses similar to this one).
+Copyright (c) 2025 MAIKOL AGUILAR
 
-You may use Odoo modules published by the holder of the copyright under the
-license of your choice, provided that it is compatible with the terms of the
-OPL-1.0.
+This software ("Software") is proprietary and may only be used, executed, modified,
+or distributed under the following terms:
 
-It is forbidden to publish, distribute, sublicense, or sell copies of the Software
-or modified copies of the Software.
+## Permitted Use
+- **Personal/Development Use**: Free for individual developers and non-commercial projects
+- **Commercial Use**: Requires a commercial license from the copyright holder
 
-The above copyright notice and this permission notice must be included in all
-copies or substantial portions of the Software.
+## Commercial Licensing
+For commercial use in companies, enterprises, or any for-profit organization:
+1. Contact the author (MAIKOL AGUILAR) at [contact information] to obtain a commercial license
+2. Payment is required for commercial licenses (pricing available upon request)
+3. Commercial licenses include support and updates
 
+## Restrictions
+1. **Attribution**: You must retain the original author credit ("MAIKOL AGUILAR") in all copies,
+   user interfaces, and documentation. You cannot change or remove the author attribution.
+2. **No Redistribution**: You cannot redistribute, sell, or sublicense the Software without
+   explicit written permission from the copyright holder.
+3. **No Derivative Works**: You cannot create derivative works for commercial distribution
+   without a commercial license.
+
+## Permissions for Development
+- You may modify the code for your own use (personal or commercial with license)
+- You may integrate it into your Odoo installations
+- Community contributions may be accepted under separate agreement
+
+## Warranty Disclaimer
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -25,3 +36,8 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
+
+## Contact
+For licensing inquiries: [Your contact information]
+Email: [your-email@example.com]
+GitHub: [@maikCyphlock]

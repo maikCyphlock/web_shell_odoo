@@ -31,5 +31,5 @@ Solo usuarios con grupo 'Administration / Settings' pueden usar el shell.
             "web_shell/static/src/components/debug_tools/*",
         ],
     },
-    "license": "OPL-1",
+    "license": "Custom",
 }
